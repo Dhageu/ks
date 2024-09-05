@@ -1,0 +1,61 @@
+{
+   "checksum": "0084fac8235410a466c7ff8a57a71a7f",
+   "roots": {
+      "bookmark_bar": {
+         "children": [ {
+            "children": [ {
+               "date_added": "13303263248700959",
+               "date_last_used": "0",
+               "guid": "b9394025-0519-4561-8d38-7bdab76eea1e",
+               "id": "7",
+               "name": "Acer",
+               "show_icon": false,
+               "source": "sync",
+               "type": "url",
+               "url": "http://www.acer.com/",
+               "visit_count": 0
+            } ],
+            "date_added": "13305551899121920",
+            "date_last_used": "0",
+            "date_modified": "13305551899121920",
+            "guid": "cf946c07-d1a1-4dae-88e4-9e63262aea9a",
+            "id": "6",
+            "name": "Acer",
+            "source": "unknown",
+            "type": "folder"
+         } ],
+         "date_added": "13370013552171867",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "0bc5d13f-2cba-5d74-951f-3f233fe6c908",
+         "id": "1",
+         "name": "Панель избранного",
+         "source": "unknown",
+         "type": "folder"
+      },
+      "other": {
+         "children": [  ],
+         "date_added": "13370013552171870",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "82b081ec-3dd3-529c-8475-ab6c344590dd",
+         "id": "2",
+         "name": "Другое избранное",
+         "source": "unknown",
+         "type": "folder"
+      },
+      "synced": {
+         "children": [  ],
+         "date_added": "13370013552171872",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "4cf2e351-0e85-532b-bb37-df045d8f8d0f",
+         "id": "3",
+         "name": "Избранное на мобильных устройствах",
+         "source": "unknown",
+         "type": "folder"
+      }
+   },
+   "sync_metadata": "CjEKDgiIgQISCJvZx4iIAQAAEgAqGElKdzhXazdZb1p2WG96RFdDTGt0THc9PUgDoAYHEokBCAEShAEKHHl4Si82ZnZrZWNyN2twNUVRekI0dFdMcGRiRT0SJDhmMjYyOTJjLWVlZjUtNWFlNS04MDcxLWJjN2RhMjc0M2EyOBgAIAAoADDFjqfu+TA4u5Kn7vkwQLuSp+75MEocYVJDV0xnaEY5YjVJbnFLSUR2dUovanZRa0ZjPVoAZQAAAAASpwEIBxKiAQocaUFlRlh0M3MzNzJIZHZ4YkR1TDR1S3l3TjdFPRIkYjkzOTQwMjUtMDUxOS00NTYxLThkMzgtN2JkYWI3NmVlYTFlGAAgACgAMJqzn8aIMTjEtJ/GiDFAxLSfxogxShw5amU3eHZ0Yjk3V1pYbEQvNFd4YjBDZHh4MmM9Wh4iHGlTNUNHMURRL2JiaHRIeEkwaEVHa01wMURmWT1lAAAAABKnAQgGEqIBChxRL3lEVlcvb1RIYXpVdU5kTUhxN2NCVHhPTHc9EiRjZjk0NmMwNy1kMWExLTRkYWUtODhlNC05ZTYzMjYyYWVhOWEYACAAKAAwmbOfxogxOJ+0n8aIMUCftJ/GiDFKHDNCMDlJU3BaMnBrSmF6dlh4Slh3aGVVL2U2UT1aHiIcQXFRRXlKUFpHOUxPWnRBeHNOM0dSOWtFMmk4PWUAAAAAEokBCAIShAEKHFljU1RvbnZFU1B3cUNzNEwyY3JWaHY2OEw5OD0SJDVkNGUzYjc5LWJjZWQtNTQ0NC1hNWIxLTRhYzMwMzBjOGE0OBgAIAAoADDGjqfu+TA43JKn7vkwQNySp+75MEocb1BWa2h3QlJiVjY1S0NXUjIrSU9OSFdvT3U4PVoAZQAAAAASiQEIAxKEAQocbmpnRHU4OGVDcnZYcDg2cEQ3ZkhHY3FGcDg4PRIkZmIzNzI3YjEtZWZkNC01OGZkLThjZTYtNmE0Mzg2OTFmYmQ5GAAgACgAMMuOp+75MDjblKfu+TBA25Sn7vkwShx5ek5CMDFjbjU0QTdjUlUwdVQrL1BnbVR0VW89WgBlAAAAADAAOAA=",
+   "version": 1
+}
