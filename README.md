@@ -1,4 +1,6 @@
-# flutter_application_1
+# Будяшкин Булат Равилевич ЭФБО-02-22
+# Практическая работа №1
+## flutter_application_1
 
 A new Flutter project.
 
