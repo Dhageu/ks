@@ -1,3 +1,5 @@
-# pr2
+# Будяшкин Булат Равилевич ЭФБО-02-22
+# Практическая работа №2
+## pr2
 
-A new Flutter project.
+![alt text](Screenshot_2.png)
