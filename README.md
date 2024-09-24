@@ -1,3 +1,7 @@
-# pr3
+# Будяшкин Булат Равилевич ЭФБО-02-22
+# Практическая работа №3
 
-A new Flutter project.
+pr3
+
+![alt text](1.jpg)
+![alt text](2.jpg)
