@@ -1,8 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pr3/pages/add_group.dart';
 import 'package:pr3/pages/description.dart';
+import 'package:path_provider/path_provider.dart';
+
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -13,13 +17,55 @@ class Homepage extends StatefulWidget {
 class HomepageState extends State<Homepage> {
 
   List groups = [];
+  List notes = [];
 
+  //Функция чтения json файла
   Future<void> readJson() async {
     String response = await rootBundle.loadString('lib/components/product.json');
     final Map<String, dynamic> data = await json.decode(response);
     setState(() {
       groups = data["groups"];
     });
+  }
+
+  //Функция добавления новой группы в json файл
+  Future<void> addNewData(Map<String, dynamic> result) async {
+    final file = File('lib/components/product.json');
+    String contents = await file.readAsString();
+    Map<String, dynamic> jsonFileContent = await jsonDecode(contents);
+    groups.add(result); 
+    jsonFileContent['groups'] = groups;
+    await file.writeAsString(jsonEncode(jsonFileContent));
+    setState(() {
+
+    });
+  }
+
+
+  //Функция удаления группы из json файла
+  Future<void> removeGroup(int index) async {
+    final file = File('lib/components/product.json');
+    String contents = await file.readAsString();
+    Map<String, dynamic> jsonFileContent = await jsonDecode(contents);
+    groups.removeAt(index);
+    jsonFileContent['groups'] = groups;
+    await file.writeAsString(jsonEncode(jsonFileContent));
+    setState(() {
+
+    });
+  }
+
+
+  //Функия перехода на страницу добавления группы
+  void _navigateToAddGroupScreen(BuildContext context) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddGroup()),
+    );
+
+    if (result != null && result.isNotEmpty) {
+      addNewData(result);
+    }
   }
 
   @override
@@ -33,11 +79,14 @@ class HomepageState extends State<Homepage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: const Center(
           child: Text("Группы", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 35))
         ),
       ),
-      body: ListView.builder(
+      body: groups.isEmpty
+        ? const Center(child: Text("Нет групп, добавьте новую."))
+        : ListView.builder(
         itemCount: groups.length,
         itemBuilder: (context, index) {
           return Padding(
@@ -54,16 +103,37 @@ class HomepageState extends State<Homepage> {
                   children: [
                     ClipRRect(
                       borderRadius: const BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
-                      child: Image.asset(groups[index]["image_url"], width: double.infinity, fit: BoxFit.fitHeight,)
+                      child: Image.network(groups[index]["image_url"], width: double.infinity, fit: BoxFit.fitHeight,)
                     ),
                     const SizedBox(height: 10,),
                     Text(groups[index]["title"], style: const TextStyle(fontSize: 25, color: Colors.white),),
                     const SizedBox(height: 10,),
-                    //const Text("Нажмите для просмотра полного описания", style: TextStyle(decoration: TextDecoration.underline, color: Colors.yellow),),
+                    IconButton(onPressed: () {
+                      showDialog(
+                        context: context, 
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text("Внимание!"),
+                            content: const Text("Вы уверены что хотите удалить данную группу?"),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  removeGroup(index);
+                                  Navigator.pop(context);
+                                }, 
+                                child: const Text("Да", style: TextStyle(color: Colors.black),)),
+                              TextButton(onPressed: Navigator.of(context).pop, child: const Text("Нет", style: TextStyle(color: Colors.black),))
+                            ]
+                          );
+                        }
+                      );
+                    },
+                    icon: const Icon(Icons.delete, color: Colors.white,),
+                    ),
                     const SizedBox(height: 10,),
                   ],
                 ),
-              ),  
+              ),
               onTap: () {
                 Navigator.push(
                   context,
@@ -73,6 +143,11 @@ class HomepageState extends State<Homepage> {
             ),
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _navigateToAddGroupScreen(context),
+        backgroundColor: Colors.white,
+        child: const Icon(Icons.add, color: Colors.black),
       ),
     );
   }

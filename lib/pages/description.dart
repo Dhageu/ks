@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:developer' as developer;
 
 class Description extends StatelessWidget {
   const Description({super.key, required this.group});
   final Map<String, dynamic> group;
+  
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +19,7 @@ class Description extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Image.asset(group["image_url"].toString(),),
+            Image.network(group["image_url"].toString()),
             const SizedBox(height: 30,),
             Text(group["description"], style: const TextStyle(color: Colors.white)),
           ],
