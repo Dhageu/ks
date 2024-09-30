@@ -103,7 +103,7 @@ class HomepageState extends State<Homepage> {
                   children: [
                     ClipRRect(
                       borderRadius: const BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
-                      child: Image.network(groups[index]["image_url"], width: double.infinity, fit: BoxFit.fitHeight,)
+                      child: FadeInImage.assetNetwork(placeholder: 'lib/components/images/placeholder.png', image: groups[index]["image_url"], imageErrorBuilder: (context, error, stackTrace) {return Image.asset('lib/components/images/placeholder.png');}, width: double.infinity, fit: BoxFit.fitHeight,)
                     ),
                     const SizedBox(height: 10,),
                     Text(groups[index]["title"], style: const TextStyle(fontSize: 25, color: Colors.white),),

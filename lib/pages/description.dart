@@ -17,9 +17,9 @@ class Description extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
+        child: ListView(
           children: [
-            Image.network(group["image_url"].toString()),
+            FadeInImage.assetNetwork(placeholder: 'lib/components/images/placeholder.png', image: group["image_url"].toString(), imageErrorBuilder: (context, error, stackTrace) {return Image.asset('lib/components/images/placeholder.png');}, width: double.infinity, fit: BoxFit.fitHeight,),
             const SizedBox(height: 30,),
             Text(group["description"], style: const TextStyle(color: Colors.white)),
           ],
