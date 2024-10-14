@@ -43,7 +43,8 @@ class _AddGroupState extends State<AddGroup> {
                 Map<String, dynamic> newGroup = {
                   "title": _titleController.text,
                   "description": _descriptionController.text,
-                  "image_url": _imageUrlController.text
+                  "image_url": _imageUrlController.text,
+                  "favourite": "false"
                 };
                 if (newGroup.isNotEmpty) {
                   Navigator.pop(context, newGroup);

@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:pr3/pages/add_group.dart';
 import 'package:pr3/pages/description.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pr3/pages/favourite.dart';
+import 'package:pr3/pages/profile.dart';
 
 
 class Homepage extends StatefulWidget {
@@ -15,16 +17,28 @@ class Homepage extends StatefulWidget {
 }
 
 class HomepageState extends State<Homepage> {
-
   List groups = [];
-  List notes = [];
+  List notes = []; 
+  int _selectedIndex = 0;
+  Color iconColor = Colors.white;
+  static const List<Widget> _widgetOptions = <Widget>[
+    Homepage(),
+    Profile(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   //Функция чтения json файла
   Future<void> readJson() async {
-    String response = await rootBundle.loadString('lib/components/product.json');
-    final Map<String, dynamic> data = await json.decode(response);
+    final file = File('lib/components/product.json');
+    String contents = await file.readAsString();
+    Map<String, dynamic> jsonFileContent = await jsonDecode(contents);
     setState(() {
-      groups = data["groups"];
+      groups = jsonFileContent["groups"];
     });
   }
 
@@ -37,7 +51,22 @@ class HomepageState extends State<Homepage> {
     jsonFileContent['groups'] = groups;
     await file.writeAsString(jsonEncode(jsonFileContent));
     setState(() {
+      
+    });
+  }
 
+  //Функция добавления в любимые
+  Future<void> addFavourite(Map<String, dynamic> group) async {
+    List<dynamic> favourite = [];
+    final file = File('lib/components/favourite.json');
+    String contents = await file.readAsString();
+    Map<String, dynamic> jsonFileContent = await jsonDecode(contents);
+    favourite = jsonFileContent['favourites'];
+    favourite.add(group);
+    jsonFileContent['favourites'] = favourite;
+    await file.writeAsString(jsonEncode(jsonFileContent));
+    setState(() {
+      
     });
   }
 
@@ -49,9 +78,27 @@ class HomepageState extends State<Homepage> {
     Map<String, dynamic> jsonFileContent = await jsonDecode(contents);
     groups.removeAt(index);
     jsonFileContent['groups'] = groups;
+    setState(() async {
+      await file.writeAsString(jsonEncode(jsonFileContent));
+    });
+  }
+
+  //Функция смены цвета иконки избранного
+  void _checkStatus(int index) async {
+    final file = File('lib/components/product.json');
+    String status = "";
+    String contents = await file.readAsString();
+    Map<String, dynamic> jsonFileContent = await jsonDecode(contents);
+    if (groups[index]["favourite"] == "false") {
+      status = "true";
+    } else {
+      status = "false";
+    }
+    groups[index]["favourite"] = status;
+    jsonFileContent['groups'] = groups;
     await file.writeAsString(jsonEncode(jsonFileContent));
     setState(() {
-
+      
     });
   }
 
@@ -77,77 +124,121 @@ class HomepageState extends State<Homepage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: const Center(
-          child: Text("Группы", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 35))
-        ),
-      ),
-      body: groups.isEmpty
-        ? const Center(child: Text("Нет групп, добавьте новую."))
-        : ListView.builder(
-        itemCount: groups.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: ListTile(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              minVerticalPadding: 0,
-              contentPadding: EdgeInsets.zero,
-              tileColor: Colors.black,
-              title: Center(
-                child: Column(
-                  children: [
-                    ClipRRect(
-                      borderRadius: const BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
-                      child: FadeInImage.assetNetwork(placeholder: 'lib/components/images/placeholder.png', image: groups[index]["image_url"], imageErrorBuilder: (context, error, stackTrace) {return Image.asset('lib/components/images/placeholder.png');}, width: double.infinity, fit: BoxFit.fitHeight,)
+    
+    //Виджет отображения групп на главной странице
+    Widget _buildGroupList() {
+      return Scaffold(
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              title: const Center(child: Text("Группы", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 35))),
+            ),
+            body: groups.isEmpty
+              ? const Center(child: Text("Нет групп, добавьте новую."))
+              : ListView.builder(
+              itemCount: groups.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    const SizedBox(height: 10,),
-                    Text(groups[index]["title"], style: const TextStyle(fontSize: 25, color: Colors.white),),
-                    const SizedBox(height: 10,),
-                    IconButton(onPressed: () {
-                      showDialog(
-                        context: context, 
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text("Внимание!"),
-                            content: const Text("Вы уверены что хотите удалить данную группу?"),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  removeGroup(index);
-                                  Navigator.pop(context);
-                                }, 
-                                child: const Text("Да", style: TextStyle(color: Colors.black),)),
-                              TextButton(onPressed: Navigator.of(context).pop, child: const Text("Нет", style: TextStyle(color: Colors.black),))
-                            ]
-                          );
-                        }
+                    minVerticalPadding: 0,
+                    contentPadding: EdgeInsets.zero,
+                    tileColor: Colors.black,
+                    title: Center(
+                      child: Column(
+                        children: [
+                          ClipRRect(
+                            borderRadius: const BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
+                            child: FadeInImage.assetNetwork(placeholder: 'lib/components/images/placeholder.png', image: groups[index]["image_url"], imageErrorBuilder: (context, error, stackTrace) {return Image.asset('lib/components/images/placeholder.png');}, width: double.infinity, fit: BoxFit.fitHeight,)
+                          ),
+                          const SizedBox(height: 10,),
+                          Text(groups[index]["title"], style: const TextStyle(fontSize: 25, color: Colors.white),),
+                          const SizedBox(height: 10,),
+                          IconButton(onPressed: () {
+                            showDialog(
+                              context: context, 
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text("Внимание!"),
+                                  content: const Text("Вы уверены что хотите удалить данную группу?"),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        removeGroup(index);
+                                        Navigator.pop(context);
+                                      }, 
+                                      child: const Text("Да", style: TextStyle(color: Colors.black),)),
+                                    TextButton(onPressed: Navigator.of(context).pop, child: const Text("Нет", style: TextStyle(color: Colors.black),))
+                                  ]
+                                );
+                              }
+                            );
+                          },
+                          icon: const Icon(Icons.delete, color: Colors.white,),
+                          ),
+                          const SizedBox(height: 10,),
+                          IconButton(
+                            icon: Icon(Icons.favorite, color: groups[index]["favourite"] == "true" ? Colors.red : Colors.white), 
+                            onPressed: () {
+                              _checkStatus(index);
+                            },
+                          ),
+                          const SizedBox(height: 10,),
+                        ],
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Description(group: groups[index]),),
                       );
                     },
-                    icon: const Icon(Icons.delete, color: Colors.white,),
-                    ),
-                    const SizedBox(height: 10,),
-                  ],
-                ),
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Description(group: groups[index]),),
+                  ),
                 );
               },
             ),
+            floatingActionButton: FloatingActionButton(
+              onPressed: () => _navigateToAddGroupScreen(context),
+              backgroundColor: Colors.white,
+              child: const Icon(Icons.add, color: Colors.black),
+            ),
           );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToAddGroupScreen(context),
-        backgroundColor: Colors.white,
-        child: const Icon(Icons.add, color: Colors.black),
+    }
+    
+    Widget _getCurrentPage() {
+      switch (_selectedIndex) {
+        case 0:
+          return _buildGroupList();
+        case 1:
+          return Favourite(readJsonH: readJson,);
+        case 2:
+          return const Profile();
+        default: 
+          return _buildGroupList();
+      }
+    }
+    
+    return Scaffold(
+      body: _getCurrentPage(),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: "Главная",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite),
+            label: "Любимые",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle),
+            label: "Профиль",
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
   }

@@ -26,4 +26,6 @@ flutter:
     - lib/components/images/supergrass.png
     - lib/components/images/wolfmother.jpg
     - lib/components/images/placeholder.png
+    - lib/components/favourite.json
+    - lib/components/images/profile.png
   uses-material-design: true
