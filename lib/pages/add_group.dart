@@ -11,6 +11,7 @@ class _AddGroupState extends State<AddGroup> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _imageUrlController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +38,11 @@ class _AddGroupState extends State<AddGroup> {
               decoration: const InputDecoration(labelText: 'Введите ссылку на изображение', labelStyle: TextStyle(color: Colors.black),),
               maxLines: 5,
             ),
+            TextField(
+              controller: _priceController,
+              decoration: const InputDecoration(labelText: 'Введите цену товара', labelStyle: TextStyle(color: Colors.black),),
+              maxLines: 5,
+            ),
             const SizedBox(height: 20,),
             ElevatedButton(
               onPressed: () {
@@ -44,7 +50,9 @@ class _AddGroupState extends State<AddGroup> {
                   "title": _titleController.text,
                   "description": _descriptionController.text,
                   "image_url": _imageUrlController.text,
-                  "favourite": "false"
+                  "favourite": "false",
+                  "price": int.parse(_priceController.text),
+                  "quantity": 0
                 };
                 if (newGroup.isNotEmpty) {
                   Navigator.pop(context, newGroup);

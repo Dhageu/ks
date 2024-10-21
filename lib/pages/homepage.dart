@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pr3/pages/add_group.dart';
+import 'package:pr3/pages/cart.dart';
 import 'package:pr3/pages/description.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pr3/pages/favourite.dart';
@@ -70,6 +71,27 @@ class HomepageState extends State<Homepage> {
     });
   }
 
+  //Функция добавления в корзину
+  Future<void> _addCart(int index) async {
+    final file = File('lib/components/product.json');
+    String contents = await file.readAsString();
+    Map<String, dynamic> jsonFileContent = await jsonDecode(contents);
+    int c_index = (jsonFileContent['groups'] as List).indexWhere((item) => item["title"] == groups[index]["title"]);
+    int quantity = groups[index]['quantity'];
+    if (quantity == 0) {
+      jsonFileContent['groups'][c_index]["quantity"] = 1;
+    }
+    await file.writeAsString(jsonEncode(jsonFileContent));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: quantity == 0 ? Text(groups[index]["title"]+" добавлен в корзину")
+        : Text(groups[index]["title"]+" уже в корзине")
+      ),
+    );
+    setState(() {
+      readJson();
+    });
+  }
 
   //Функция удаления группы из json файла
   Future<void> removeGroup(int index) async {
@@ -131,6 +153,20 @@ class HomepageState extends State<Homepage> {
             appBar: AppBar(
               backgroundColor: Colors.white,
               title: const Center(child: Text("Группы", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 35))),
+              actions: <Widget>[
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Cart(readJsonH: readJson,)),
+                    );
+                    setState(() {
+                      readJson();
+                    });
+                  }, 
+                  icon: const Icon(Icons.shopping_cart)
+                ),
+              ],
             ),
             body: groups.isEmpty
               ? const Center(child: Text("Нет групп, добавьте новую."))
@@ -156,35 +192,47 @@ class HomepageState extends State<Homepage> {
                           const SizedBox(height: 10,),
                           Text(groups[index]["title"], style: const TextStyle(fontSize: 25, color: Colors.white),),
                           const SizedBox(height: 10,),
-                          IconButton(onPressed: () {
-                            showDialog(
-                              context: context, 
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: const Text("Внимание!"),
-                                  content: const Text("Вы уверены что хотите удалить данную группу?"),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        removeGroup(index);
-                                        Navigator.pop(context);
-                                      }, 
-                                      child: const Text("Да", style: TextStyle(color: Colors.black),)),
-                                    TextButton(onPressed: Navigator.of(context).pop, child: const Text("Нет", style: TextStyle(color: Colors.black),))
-                                  ]
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.favorite, color: groups[index]["favourite"] == "true" ? Colors.red : Colors.white), 
+                                onPressed: () {
+                                  _checkStatus(index);
+                                },
+                              ),
+                              IconButton(
+                                onPressed: () {
+                                   _addCart(index);
+                                }, 
+                                icon: const Icon(Icons.add_shopping_cart, color: Colors.white)
+                              ),
+                              IconButton(onPressed: () {
+                                showDialog(
+                                  context: context, 
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: const Text("Внимание!"),
+                                      content: const Text("Вы уверены что хотите удалить данную группу?"),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            removeGroup(index);
+                                            Navigator.pop(context);
+                                          }, 
+                                          child: const Text("Да", style: TextStyle(color: Colors.black),)),
+                                        TextButton(onPressed: Navigator.of(context).pop, child: const Text("Нет", style: TextStyle(color: Colors.black),))
+                                      ]
+                                    );
+                                  }
                                 );
-                              }
-                            );
-                          },
-                          icon: const Icon(Icons.delete, color: Colors.white,),
+                              },
+                              icon: const Icon(Icons.delete, color: Colors.white,),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 10,),
-                          IconButton(
-                            icon: Icon(Icons.favorite, color: groups[index]["favourite"] == "true" ? Colors.red : Colors.white), 
-                            onPressed: () {
-                              _checkStatus(index);
-                            },
-                          ),
+                          Text(groups[index]["price"].toString()+"₽", style: const TextStyle(color: Colors.white),),
                           const SizedBox(height: 10,),
                         ],
                       ),

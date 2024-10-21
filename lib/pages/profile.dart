@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:pr3/pages/description.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -13,21 +12,10 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
-  List<dynamic> favourite = [];
-
-  Future<void> readJson() async {
-    String response = await rootBundle.loadString('lib/components/favourite.json');
-    Map<String, dynamic> data = await jsonDecode(response);
-    setState(() {
-      favourite = data["favourites"];
-    });
-  }
 
   @override
   void initState() {
     super.initState();
-    readJson();
-    debugPrint(favourite.toString());
   }
 
   @override
@@ -69,47 +57,6 @@ class _ProfileState extends State<Profile> {
           ),
         ),
       )
-      /*favourite.isEmpty ? const Text("Любимых групп нет!") :
-      ListView.builder(
-        itemCount: favourite.length,
-        itemBuilder: (context, index) {
-           return Column(
-             children: [
-               const Text("Любимые группы", style: TextStyle(fontSize: 20)),
-               Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: ListTile(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  minVerticalPadding: 0,
-                  contentPadding: EdgeInsets.zero,
-                  tileColor: Colors.black,
-                  title: Center(
-                    child: Column(
-                      children: [
-                        ClipRRect(
-                          borderRadius: const BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
-                          child: FadeInImage.assetNetwork(placeholder: 'lib/components/images/placeholder.png', image: favourite[index]["image_url"], imageErrorBuilder: (context, error, stackTrace) {return Image.asset('lib/components/images/placeholder.png');}, width: double.infinity, fit: BoxFit.fitHeight,)
-                        ),
-                        const SizedBox(height: 10,),
-                        Text(favourite[index]["title"], style: const TextStyle(fontSize: 25, color: Colors.white),),
-                        const SizedBox(height: 10,),
-                      ],
-                    ),
-                  ),
-                  /*onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => Description(group: favourite[index]),),
-                    );
-                  },*/
-                ),
-               ),
-             ],
-           );
-        }
-      )*/
     );
   }
 }
