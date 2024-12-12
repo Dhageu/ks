@@ -1,10 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+
+	_ "github.com/lib/pq"
 )
 
 // group представляет продукт
@@ -18,8 +22,7 @@ type Group struct {
 	Quantity    int
 }
 
-// Пример списка продуктов
-var groups = []Group{
+/*var groups = []Group{
 	{ID: 1, Title: "Wolfmother", Description: "Wolfmother - австралийская рок-группа, образовавшаяся в Эрскинвилле, Сидней, в 2000 году и с 2004 года исполняющая хард-рок с элементами психоделики и стоунер-рока, основываясь на наследии конца 1960-х — начале 1970-х годов, прог-роке, гранже и нео-блюзе. Обладатель множества музыкальных наград, в том числе Грэмми за «Лучшее хард-рок исполнение» с синглом «Woman».", ImageURL: "https://i.pinimg.com/originals/2b/9a/b2/2b9ab2902e90dd5fef095f8b9fe7ab8f.jpg", Favourite: "true", Price: 1200, Quantity: 0},
 	{ID: 2, Title: "Supergrass", Description: "Supergrass — британская группа альтернативного рока, образованная в 1993 году бывшими участниками инди-группы The Jennifers и получившая известность на волне брит-попа в 1995—1996 годах. Квартет с фронтменом Гэзом Кумбзом во главе начал своё восхождение с быстрых, запоминающихся поп-панк-синглов, соединив в своём раннем творчестве (согласно Allmusic) влияния — с одной стороны Buzzcocks, The Jam и Madness, с другой — мод-рока (The Kinks, The Small Faces) и глэма (T. Rex). В последующие годы музыка Supergrass усложнялась и смягчалась, наполянясь нео-психоделическими и позднебитловскими мотивами. Группа становилась лауреатом Ivor Novello и Mercury Prize, трижды получала Brit Awards.", ImageURL: "https://i.pinimg.com/originals/d3/75/0a/d3750a91f6e83e0ed4785d35505aaff1.jpg", Favourite: "true", Price: 1000, Quantity: 0},
 	{ID: 3, Title: "Radiohead", Description: "Radiohead — британская рок-группа из Оксфордшира. Группа была основана в 1985 году, и её состав с того времени не менялся. Стиль Radiohead традиционно определяют как альтернативный рок, хотя на разных этапах звучание варьировалось от брит-попа до арт-рока и электронной музыки.", ImageURL: "https://a.d-cd.net/78041a2s-960.jpg", Favourite: "false", Price: 2165, Quantity: 0},
@@ -27,127 +30,96 @@ var groups = []Group{
 	{ID: 5, Title: "(K)now Name", Description: "(K)now Name — японская музыкальная группа, сотрудничающая с лейблом Toho Animation Records. Была сформирована в 2016 году и занимается созданием саундтреков к аниме-сериалам.", ImageURL: "https://39s-a.musify.club/img/71/20488847/52531513.jpg", Favourite: "false", Price: 1456, Quantity: 0},
 	{ID: 6, Title: "Король и Шут", Description: "«Король и Шут» — советская и российская хоррор-панк-группа из Санкт-Петербурга. Группа была образована в Ленинграде в 1988 году. После смерти её лидера и одного из основателей Михаила Горшенёва 19 июля 2013 года выступает только в рок-мюзикле TODD. Выделяется своим необычным для классического панк-рока стилем. Песни группы представляют собой небольшие законченные истории, часто в фэнтезийном, мистическом, а также историческом и ужасающем ключе. Сценический имидж группы постоянно менялся и часто включал в себя грим, соответствующий тематике песен. В прессе группа неоднократно обозначалась как «культовая»", ImageURL: "https://plastinka.com/files/modules/artists/7720/common/photo_large-kish2.jpg", Favourite: "false", Price: 3664, Quantity: 0},
 	{ID: 7, Title: "Skillet", Description: "Skillet — американская христианская рок-группа из города Мемфис, штат Теннесси, основанная в 1996 году. На данный момент группой выпущено одиннадцать студийных альбомов, четыре EP и два концертных альбома", ImageURL: "https://i.pinimg.com/736x/c8/ea/7a/c8ea7a217572ef26833161b8dd10a028.jpg", Favourite: "false", Price: 1235, Quantity: 0},
+}*/
+
+var db *sql.DB
+
+func initDB() {
+	var err error
+	connStr := "host=localhost port=5432 user=db_user password=password dbname=groupdb sslmode=disable"
+	db, err = sql.Open("postgres", connStr)
+	if err != nil {
+		log.Fatal("Ошибка подключения к базе данных:", err)
+	}
+
+	// Проверка соединения
+	err = db.Ping()
+	if err != nil {
+		log.Fatal("База данных недоступна:", err)
+	}
+
+	fmt.Println("Успешное подключение к базе данных PostgreSQL")
 }
 
-// обработчик для GET-запроса, возвращает список продуктов
 func getGroupsHandler(w http.ResponseWriter, r *http.Request) {
-	// Устанавливаем заголовки для правильного формата JSON
 	w.Header().Set("Content-Type", "application/json")
-	// Преобразуем список заметок в JSON
-	json.NewEncoder(w).Encode(groups)
+
+	rows, err := db.Query("SELECT * FROM groups ORDER BY id") // Запрос к БД
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var groups []Group
+	for rows.Next() {
+		var g Group
+		if err := rows.Scan(&g.ID, &g.Title, &g.Description, &g.ImageURL, &g.Favourite, &g.Price, &g.Quantity); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		groups = append(groups, g)
+	}
+
+	json.NewEncoder(w).Encode(groups) // Отправка данных клиенту
 }
 
 func getFavouritesHandler(w http.ResponseWriter, r *http.Request) {
-	var g = []Group{}
-	// Устанавливаем заголовки для правильного формата JSON
 	w.Header().Set("Content-Type", "application/json")
-	// Преобразуем список заметок в JSON
-	for _, group := range groups {
-		if group.Favourite == "true" {
-			g = append(g, group)
-		}
+
+	rows, err := db.Query("SELECT * FROM groups WHERE favourite = 'true' ORDER BY id") // Запрос к БД
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	json.NewEncoder(w).Encode(g)
+	defer rows.Close()
+
+	var groups []Group
+	for rows.Next() {
+		var g Group
+		if err := rows.Scan(&g.ID, &g.Title, &g.Description, &g.ImageURL, &g.Favourite, &g.Price, &g.Quantity); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		groups = append(groups, g)
+	}
+	json.NewEncoder(w).Encode(groups)
 }
 
 func getCartHandler(w http.ResponseWriter, r *http.Request) {
-	var g = []Group{}
-	// Устанавливаем заголовки для правильного формата JSON
 	w.Header().Set("Content-Type", "application/json")
-	// Преобразуем список заметок в JSON
-	for _, group := range groups {
-		if group.Quantity != 0 {
-			g = append(g, group)
-		}
-	}
-	json.NewEncoder(w).Encode(g)
-}
 
-// обработчик для POST-запроса, добавляет продукт
-func createGroupHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var newGroup Group
-	err := json.NewDecoder(r.Body).Decode(&newGroup)
+	rows, err := db.Query("SELECT * FROM groups WHERE quantity != 0 ORDER BY id") // Запрос к БД
 	if err != nil {
-		fmt.Println("Error decoding request body:", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer rows.Close()
 
-	fmt.Printf("Received new group: %+v\n", newGroup)
-	var lastID int = len(groups)
-
-	for _, groupItem := range groups {
-		if groupItem.ID > lastID {
-			lastID = groupItem.ID
-		}
-	}
-	newGroup.ID = lastID + 1
-	groups = append(groups, newGroup)
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(newGroup)
-}
-
-//Добавление маршрута для получения одного продукта
-
-func getGroupByIDHandler(w http.ResponseWriter, r *http.Request) {
-	// Получаем ID из URL
-	idStr := r.URL.Path[len("/groups/"):]
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		http.Error(w, "Invalid group ID", http.StatusBadRequest)
-		return
-	}
-
-	// Ищем продукт с данным ID
-	for _, group := range groups {
-		if group.ID == id {
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(group)
+	var groups []Group
+	for rows.Next() {
+		var g Group
+		if err := rows.Scan(&g.ID, &g.Title, &g.Description, &g.ImageURL, &g.Favourite, &g.Price, &g.Quantity); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		groups = append(groups, g)
 	}
-
-	// Если продукт не найден
-	http.Error(w, "group not found", http.StatusNotFound)
+	json.NewEncoder(w).Encode(groups)
 }
 
-// удаление продукта по id
-func deleteGroupHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodDelete {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Получаем ID из URL
-	idStr := r.URL.Path[len("/groups/delete/"):]
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		http.Error(w, "Invalid group ID", http.StatusBadRequest)
-		return
-	}
-
-	// Ищем и удаляем продукт с данным ID
-	for i, group := range groups {
-		if group.ID == id {
-			// Удаляем продукт из среза
-			groups = append(groups[:i], groups[i+1:]...)
-			w.WriteHeader(http.StatusNoContent) // Успешное удаление, нет содержимого
-			return
-		}
-	}
-
-	// Если продукт не найден
-	http.Error(w, "group not found", http.StatusNotFound)
-}
-
-// Обновление продукта по id
 func updateGroupHandler(w http.ResponseWriter, r *http.Request) {
+	// Разрешаем только PUT-метод
 	if r.Method != http.MethodPut {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
@@ -161,36 +133,195 @@ func updateGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Декодируем обновлённые данные продукта
+	// Декодируем обновлённые данные группы
 	var updatedGroup Group
 	err = json.NewDecoder(r.Body).Decode(&updatedGroup)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Invalid JSON data: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Ищем продукт для обновления
-	for i, group := range groups {
-		if group.ID == id {
+	// Выполняем SQL-запрос для обновления группы по ID
+	query := `
+        UPDATE groups 
+        SET title = $1, description = $2, image_url = $3, favourite = $4, price = $5, quantity = $6
+        WHERE id = $7 
+        RETURNING id, title, description, image_url, favourite, price, quantity
+    `
+	var group Group
+	err = db.QueryRow(
+		query,
+		updatedGroup.Title,
+		updatedGroup.Description,
+		updatedGroup.ImageURL,
+		updatedGroup.Favourite,
+		updatedGroup.Price,
+		updatedGroup.Quantity,
+		id,
+	).Scan(
+		&group.ID,
+		&group.Title,
+		&group.Description,
+		&group.ImageURL,
+		&group.Favourite,
+		&group.Price,
+		&group.Quantity,
+	)
 
-			groups[i].ImageURL = updatedGroup.ImageURL
-			groups[i].Title = updatedGroup.Title
-			groups[i].Description = updatedGroup.Description
-			groups[i].Price = updatedGroup.Price
-			groups[i].Favourite = updatedGroup.Favourite
-			groups[i].Quantity = updatedGroup.Quantity
-
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(groups[i])
-			return
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Если группа с таким ID не найдена
+			http.Error(w, "Group not found", http.StatusNotFound)
+		} else {
+			// Обработка других ошибок
+			http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
 		}
+		return
 	}
 
-	// Если продукт не найден
-	http.Error(w, "group not found", http.StatusNotFound)
+	// Устанавливаем заголовок и отправляем обновлённую группу в JSON-формате
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(group); err != nil {
+		http.Error(w, "Error encoding JSON: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func getGroupByIDHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Path[len("/groups/"):]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	// Выполняем запрос к базе данных для поиска группы по ID
+	var group Group
+	err = db.QueryRow("SELECT * FROM groups WHERE id = $1", id).Scan(&group.ID, &group.Title, &group.Description, &group.ImageURL, &group.Favourite, &group.Price, &group.Quantity)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Если группа с таким ID не найдена
+			http.Error(w, "Group not found", http.StatusNotFound)
+		} else {
+			// Если произошла другая ошибка
+			http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Устанавливаем заголовки ответа для правильного формата JSON
+	w.Header().Set("Content-Type", "application/json")
+
+	// Отправляем найденную группу в формате JSON
+	if err := json.NewEncoder(w).Encode(group); err != nil {
+		http.Error(w, "Error encoding JSON: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func createGroupHandler(w http.ResponseWriter, r *http.Request) {
+	// Разрешаем только POST-метод
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Декодируем данные новой группы из тела запроса
+	var newGroup Group
+	err := json.NewDecoder(r.Body).Decode(&newGroup)
+	if err != nil {
+		fmt.Println("Error decoding request body:", err)
+		http.Error(w, "Invalid JSON data: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// SQL-запрос для вставки новой группы и возврата созданной записи
+	query := `
+        INSERT INTO groups (id, title, description, image_url, favourite, price, quantity)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id, title, description, image_url, favourite, price, quantity
+    `
+
+	// Создаём структуру для результата
+	var createdGroup Group
+	err = db.QueryRow(
+		query,
+		newGroup.ID,
+		newGroup.Title,
+		newGroup.Description,
+		newGroup.ImageURL,
+		newGroup.Favourite,
+		newGroup.Price,
+		newGroup.Quantity,
+	).Scan(
+		&createdGroup.ID,
+		&createdGroup.Title,
+		&createdGroup.Description,
+		&createdGroup.ImageURL,
+		&createdGroup.Favourite,
+		&createdGroup.Price,
+		&createdGroup.Quantity,
+	)
+
+	if err != nil {
+		fmt.Println("Error inserting group into database:", err)
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Устанавливаем заголовок и отправляем созданную группу клиенту
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(createdGroup); err != nil {
+		http.Error(w, "Error encoding JSON: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Printf("Successfully created group: %+v\n", createdGroup)
+}
+
+func deleteGroupHandler(w http.ResponseWriter, r *http.Request) {
+	// Проверка метода запроса
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Получаем ID из URL
+	idStr := r.URL.Path[len("/groups/delete/"):]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	// SQL-запрос для удаления группы по ID
+	query := "DELETE FROM groups WHERE id = $1"
+	result, err := db.Exec(query, id)
+	if err != nil {
+		http.Error(w, "Error deleting group: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Проверяем, была ли удалена хотя бы одна строка
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		http.Error(w, "Error checking rows affected: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if rowsAffected == 0 {
+		// Если ни одна строка не была удалена, возвращаем ошибку 404
+		http.Error(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
+	// Если всё успешно, возвращаем статус 204 (No Content)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func main() {
+	initDB()
 	http.HandleFunc("/groups", getGroupsHandler)           // Получить все продукты
 	http.HandleFunc("/groups/create", createGroupHandler)  // Создать продукт
 	http.HandleFunc("/groups/", getGroupByIDHandler)       // Получить продукт по ID

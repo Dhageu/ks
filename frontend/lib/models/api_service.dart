@@ -93,7 +93,8 @@ class ApiService {
     try {
       final response = await _dio.get('http://localhost:8080/groups/cart');
       if (response.statusCode == 200) {
-        List<Group> groups = (response.data as List)
+        List<dynamic> data = response.data ?? [];
+        List<Group> groups = data
             .map((groups) => Group.fromJson(groups))
             .toList();
         return groups;
