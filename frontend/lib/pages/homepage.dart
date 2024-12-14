@@ -11,6 +11,7 @@ import 'package:pr3/models/group_model.dart';
 import 'package:pr3/models/api_service.dart';
 import 'package:pr3/pages/favourite.dart';
 import 'package:pr3/pages/profile.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 
 class Homepage extends StatefulWidget {
@@ -20,11 +21,17 @@ class Homepage extends StatefulWidget {
 }
 
 class HomepageState extends State<Homepage> {
+  final user = Supabase.instance.client.auth.currentUser;
   late Future<List<Group>> groups;
+  final TextEditingController _searchController = TextEditingController();
+  List<Group> allGroups = [];
+  List<Group> filteredGroups = [];
   dynamic last_id = 0;
   List notes = []; 
   int _selectedIndex = 0;
   Color iconColor = Colors.white;
+  int sort = 0;
+  String query = '';
 
   static const List<Widget> _widgetOptions = <Widget>[
     Homepage(),
@@ -77,7 +84,7 @@ class HomepageState extends State<Homepage> {
 
   //Функция удаления группы по id
   void removeGroup(int index) async {
-    await ApiService().deleteGroupByID(index+1);
+    await ApiService().deleteGroupByID(index);
     setState(() {
       readJson();
     });
@@ -117,15 +124,55 @@ class HomepageState extends State<Homepage> {
   //Функция чтения данных
   void readJson() async {
     groups = ApiService().getGroups();
+    List<Group> g = await groups;
+    setState(() {
+      allGroups = g;
+      filteredGroups = g;
+    });
+  }
 
+  void filterGroups() async {
+    List<Group> filtered = [];
+    if (query.isNotEmpty) {
+      filtered = allGroups.where((group) => group.title.toLowerCase().startsWith(query.toLowerCase())).toList();
+    } else {
+      filtered = allGroups;
+    }
+    setState(() {
+      filteredGroups = filtered;
+    });
+  }
+
+  void sortGroups(List<Group> group) {
+    switch (sort) {
+      case 0:
+        group.sort((a, b) => a.id.compareTo(b.id));
+        return;
+      case 1:
+        group.sort((a, b) => a.title.compareTo(b.title));
+        return;
+      case 2:
+        group.sort((a, b) => b.title.compareTo(a.title));
+        return;
+      case 3:
+        group.sort((a, b) => a.price.compareTo(b.price));
+        return;
+      case 4:
+        group.sort((a, b) => b.price.compareTo(a.price));
+        return;
+      default:
+        group.sort((a, b) => a.id.compareTo(b.id));
+        return;
+    }
   }
 
   @override
   void initState() {
     super.initState();
     setState(() {
-      
+      sort = 0;
     });
+    _searchController.addListener(filterGroups);
     readJson();
   }
 
@@ -138,7 +185,7 @@ class HomepageState extends State<Homepage> {
       return Scaffold(
             appBar: AppBar(
               backgroundColor: Colors.white,
-              title: const Center(child: Text("Группы", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 35))),
+              title: Center(child: Text("Группы", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 35))),
               actions: <Widget>[
                 IconButton(
                   onPressed: () async {
@@ -158,6 +205,49 @@ class HomepageState extends State<Homepage> {
                   icon: const Icon(Icons.shopping_cart)
                 ),
               ],
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(100), 
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16.0),
+                      child: DropdownButton<int>(
+                        value: sort,
+                        icon: const Icon(Icons.sort),
+                        onChanged: (int? newValue) {
+                          setState(() {
+                            sort = newValue!;
+                          });
+                        },
+                        items: const [
+                          DropdownMenuItem(value: 0, child: Text('Без сортировки')),
+                          DropdownMenuItem(value: 1, child: Text('С конца алфавита')),
+                          DropdownMenuItem(value: 2, child: Text('С начала алфавита')),
+                          DropdownMenuItem(value: 3, child: Text('По возрастанию цены')),
+                          DropdownMenuItem(value: 4, child: Text('По убыванию цены')),
+                        ],
+                      ),
+                    ),
+                    TextField(
+                          controller: _searchController,
+                          decoration: const InputDecoration(
+                            labelText: 'Поиск',
+                            hintText: 'Введите название группы',
+                            prefixIcon: Icon(Icons.search),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                            ),
+                          ),
+                          onChanged: (q) {
+                            setState(() {
+                              query = q;
+                            });
+                            filterGroups();
+                          },
+                    ),
+                  ],
+                ),
+              ),
             ),
             body: FutureBuilder(
                   key: ValueKey(groups),
@@ -170,8 +260,13 @@ class HomepageState extends State<Homepage> {
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       return const Center(child: Text("Нет групп, добавьте новую."));
                     }
-                    final groups = snapshot.data!;
-                    last_id = groups.length;
+                    List<Group> temp_groups = snapshot.data!;
+                    last_id = temp_groups.length;
+                    List<Group> groups = _searchController.text.isEmpty ? temp_groups : temp_groups.where((group) {
+                      return group.title.toLowerCase().startsWith(_searchController.text.toLowerCase());
+                    }).toList();
+                    sortGroups(groups);
+                    // groups.sort((a, b) => b.title.compareTo(a.title));
                     return ListView.builder(
                       key: const PageStorageKey<String>('groupList'),
                       itemCount: groups.length,
@@ -201,12 +296,12 @@ class HomepageState extends State<Homepage> {
                                       IconButton(
                                         icon: Icon(Icons.favorite, color: groups[index].favourite == "true" ? Colors.red : Colors.white), 
                                         onPressed: () {
-                                          _checkStatus(index+1);
+                                          _checkStatus(groups[index].id);
                                         },
                                       ),
                                       IconButton(
                                         onPressed: () {
-                                          _addCart(index+1);
+                                          _addCart(groups[index].id);
                                         }, 
                                         icon: const Icon(Icons.add_shopping_cart, color: Colors.white)
                                       ),
@@ -220,7 +315,7 @@ class HomepageState extends State<Homepage> {
                                               actions: [
                                                 TextButton(
                                                   onPressed: () {
-                                                    removeGroup(index);
+                                                    removeGroup(groups[index].id);
                                                     Navigator.pop(context);
                                                   }, 
                                                   child: const Text("Да", style: TextStyle(color: Colors.black),)),
@@ -243,7 +338,7 @@ class HomepageState extends State<Homepage> {
                             onTap: () async {
                               final result = await Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => Description(index: index+1, readJson: readJson,),),
+                                MaterialPageRoute(builder: (context) => Description(index: groups[index].id, readJson: readJson,),),
                               );
                               setState(() {
                                 
@@ -266,6 +361,11 @@ class HomepageState extends State<Homepage> {
                   child: const Icon(Icons.add, color: Colors.black),
                 ),
       );
+    }
+    @override
+    void dispose() {
+      _searchController.dispose();
+      super.dispose();
     }
     
     Widget _getCurrentPage() {
