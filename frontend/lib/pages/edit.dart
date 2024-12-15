@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pr3/models/api_service.dart';
 import 'package:pr3/models/group_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EditGroup extends StatefulWidget {
-  /*final Group group;
-  final String title;
-  final String description;
-  final String image_url;
-  final String favoutite;
-  final int quantity;
-  final int price;*/
   final VoidCallback readGroup;
   final int index;
   const EditGroup({super.key, required this.readGroup, required this.index});
@@ -20,6 +14,7 @@ class EditGroup extends StatefulWidget {
 
 class _EditGroupState extends State<EditGroup> {
   final int index;
+  final user = Supabase.instance.client.auth.currentUser!;
   _EditGroupState({required this.readGroup, required this.index});
   final VoidCallback readGroup;
   late Group group;

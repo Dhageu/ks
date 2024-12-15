@@ -4,6 +4,7 @@ import 'dart:developer' as developer;
 
 import 'package:pr3/models/group_model.dart';
 import 'package:pr3/pages/edit.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Description extends StatefulWidget {
   const Description({super.key, required this.index, required this.readJson});
@@ -14,6 +15,7 @@ class Description extends StatefulWidget {
 }
 
 class DescriptionState extends State<Description> {
+  final user = Supabase.instance.client.auth.currentUser!;
   DescriptionState({required this.index, required this.readJson});
   final int index;
   final VoidCallback readJson;
@@ -58,6 +60,7 @@ class DescriptionState extends State<Description> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: FutureBuilder(
+        key: ValueKey(group),
         future: group,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {

@@ -6,6 +6,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:pr3/models/api_service.dart';
 import 'package:pr3/models/group_model.dart';
 import 'package:pr3/pages/description.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Cart extends StatefulWidget {
   final VoidCallback readJsonH;
@@ -16,26 +17,19 @@ class Cart extends StatefulWidget {
 }
 
 class _CartState extends State<Cart> {
+  final user = Supabase.instance.client.auth.currentUser!;
   late Future<List<Group>> cartItems;
   final VoidCallback readJsonH;
   _CartState({required this.readJsonH});
   //Функция чтения json файла
   void readJson() async {
-    cartItems = ApiService().getCartItems();
+    cartItems = ApiService().getCartItems(user.id.toString());
     readJsonH();
   }
 
   //Функция удаления из корзины
   Future<void> _cartRemove(Group item) async {
-    Map<String, dynamic> updatedCart = {
-      "Title": item.title,
-      "Description": item.description,
-      "Favourite": item.favourite,
-      "ImageURL": item.image_url,
-      "Price": item.price,
-      "Quantity": 0,
-    };
-    await ApiService().updateGroup(item.id, updatedCart);
+    await ApiService().deleteCartByID(item.id, user.id.toString());
     setState(() {
       readJson();
     });
@@ -46,27 +40,47 @@ class _CartState extends State<Cart> {
     Map<String, dynamic> updatedCart = {};
     if (increase) {
       updatedCart = {
-        "Title": item.title,
-        "Description": item.description,
-        "Favourite": item.favourite,
-        "ImageURL": item.image_url,
-        "Price": item.price,
+        "ID": item.id,
         "Quantity": item.quantity+1,
       };
     } else {
       updatedCart = {
-        "Title": item.title,
-        "Description": item.description,
-        "Favourite": item.favourite,
-        "ImageURL": item.image_url,
-        "Price": item.price,
+        "ID": item.id,
         "Quantity": item.quantity-1,
       };
     }
-    await ApiService().updateGroup(item.id, updatedCart);
+    await ApiService().updateQuantity(user.id.toString(), updatedCart);
     setState(() {
       readJson();
     });
+  }
+
+  void saveOrdersToDB(List<Group> g) async {
+    final user = Supabase.instance.client.auth.currentUser!;
+    Map<String, dynamic> updatedCart = {};
+    debugPrint(user.id);
+    List<Map<String, dynamic>> g_json = g.map((group) => group.toJson()).toList();
+    try {
+      final response = await Supabase.instance.client.rpc('add_to_jsonb_array', params: {'u_id': user.id.toString(), 'new_element': g_json});
+      debugPrint('Успешно отправилось в Supabase');
+      for (var item in g) {
+        updatedCart = {
+          "Title": item.title,
+          "Description": item.description,
+          "Favourite": item.favourite,
+          "ImageURL": item.image_url,
+          "Price": item.price,
+          "Quantity": 0,
+        };
+        await ApiService().updateGroup(item.id, updatedCart);
+        await ApiService().deleteCartByID(item.id, user.id.toString());
+      }
+      setState(() {
+        readJson(); 
+      });
+    } catch (e) {
+      debugPrint('Ошибка при отправке данных $e');
+    }
   }
   
   @override
@@ -172,26 +186,54 @@ class _CartState extends State<Cart> {
                         );
                       }
                     ),
-                    Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            decoration: const BoxDecoration(
-                              borderRadius: BorderRadius.all(Radius.circular(20)),
-                              color: Colors.black,
-                            ),
-                            padding: const EdgeInsets.all(16.0),
-                            child: Text(
-                              'Суммарная стоимость корзины: ${cartItems.fold(0, (f, s) {
-                                return (f + (int.parse(s.price.toString()) * int.parse(s.quantity.toString())));
-                              })} ₽',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Align(
+                              alignment: Alignment.bottomCenter,
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                decoration: BoxDecoration(
+                                  borderRadius: const BorderRadius.all(Radius.circular(20)),
+                                  border: Border.all(
+                                    color: Colors.black,
+                                    width: 1,
+                                  ),
+                                  color: Colors.white,
+                                ),
+                                padding: const EdgeInsets.all(16.0),
+                                child: Text(
+                                  'Суммарная стоимость корзины: ${cartItems.fold(0, (f, s) {
+                                    return (f + (int.parse(s.price.toString()) * int.parse(s.quantity.toString())));
+                                  })} ₽',
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 16,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
+                            const SizedBox(height: 10,),
+                            TextButton(
+                              onPressed: () {saveOrdersToDB(cartItems);},
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 50), 
+                              ),
+                              child: const Text(
+                                'Оформить заказ',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20,),
+                      ],
+                    ),
                   ],
                 );
         }

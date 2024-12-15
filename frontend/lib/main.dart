@@ -21,12 +21,17 @@ class MainApp extends StatefulWidget {
 }
 
 class MainAppState extends State<MainApp> {
-  final user = Supabase.instance.client.auth.currentUser!;
+  final user = Supabase.instance.client.auth.currentUser;
   bool error = false;
+  
   void getUserID() async {
     final admin = SupabaseClient('https://zjapfdjwdduyjhukieof.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqYXBmZGp3ZGR1eWpodWtpZW9mIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNDA5NzI2NCwiZXhwIjoyMDQ5NjczMjY0fQ.iPnTJoR_8sPupnW1ayeOtDan543CCpw35tOp9_T3xOo');
     try {
-      final response = await admin.auth.admin.getUserById(user.id);
+      if (user == null) {
+        throw AuthException('Пользователь не найден');
+      } else{
+        final response = await admin.auth.admin.getUserById(user!.id);
+      }
     } on AuthException catch (e) {
       debugPrint(e.statusCode);
       setState(() {
@@ -53,9 +58,5 @@ class MainAppState extends State<MainApp> {
         home: Authpage(),
       );
     }
-    /*return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Homepage(),
-    );*/
   }
 }

@@ -18,6 +18,10 @@ class _AuthpageState extends State<Authpage> {
   final TextEditingController _passwordController = TextEditingController();
   TextEditingController _usernameController = TextEditingController();
 
+  void saveUser() {
+
+  }
+
   Future<void> signUp(String email, String password, BuildContext context) async {
     try {
       final RegExp emailRegex = RegExp(
@@ -44,7 +48,7 @@ class _AuthpageState extends State<Authpage> {
                     ElevatedButton( 
                       onPressed: () async {
                         try {
-                          await Supabase.instance.client.from('users').insert({'name': _usernameController.text});
+                          await Supabase.instance.client.from('users').insert({'name': _usernameController.text, 'user_id': user_id});
                         } catch (e) {
                           debugPrint('Ошибка в установке имени $e');
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -79,7 +83,6 @@ class _AuthpageState extends State<Authpage> {
             );
           }
         );
-        // Действия после успешной регистрации (например, переход на другой экран)
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('id не найдено')),

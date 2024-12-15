@@ -17,6 +17,18 @@ class Group {
     required this.quantity,
   });
 
+  Map<String, dynamic> toJson() {
+    return {
+      'ID': id,
+      'Title': title,
+      "Description": description,
+      'ImageURL': image_url,
+      'Favourite': favourite,
+      'Price': price,
+      'Quantity': quantity,
+    };
+  }
+
   factory Group.fromJson(Map<String, dynamic> json) {
     return Group(
       id: json['ID'] as int,

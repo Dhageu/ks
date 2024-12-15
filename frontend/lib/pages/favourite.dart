@@ -7,6 +7,7 @@ import 'package:pr3/models/group_model.dart';
 import 'package:pr3/pages/cart.dart';
 import 'package:pr3/pages/description.dart';
 import 'package:pr3/pages/homepage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Favourite extends StatefulWidget {
   final VoidCallback readJsonH;
@@ -17,13 +18,19 @@ class Favourite extends StatefulWidget {
 }
 
 class _FavouriteState extends State<Favourite> {
+  final user = Supabase.instance.client.auth.currentUser!;
   final VoidCallback readJsonH;
   _FavouriteState({required this.readJsonH});
   late Future<List<Group>> favourites;
+  List<Group> f = [];
   List tt = [];
 
   void readJson() async {
-    favourites = ApiService().getFavourites();
+    favourites = ApiService().getFavourites(user.id.toString());
+    f = await favourites;
+    setState(() {
+
+    });
     readJsonH();
   }
 
@@ -53,6 +60,20 @@ class _FavouriteState extends State<Favourite> {
   }
 
   void _checkStatus(int index) async {
+    if (f.isNotEmpty && f.map((favourite) => favourite.id).toSet().contains(index)) {
+      await ApiService().deleteFavByID(index, user.id.toString());
+      setState(() {
+        readJson();
+      });
+    } else {
+      await ApiService().addFav(index, user.id.toString());
+      setState(() {
+        readJson();
+      });
+    }
+  }
+
+  /*void _checkStatus(int index) async {
     final group = await ApiService().getGroupByID(index);
     String status = "";
     if (group.favourite == "false") {
@@ -73,7 +94,7 @@ class _FavouriteState extends State<Favourite> {
       readJson();
       readJsonH();
     });
-  }
+  }*/
 
   @override
   void initState () {
@@ -142,9 +163,11 @@ class _FavouriteState extends State<Favourite> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       IconButton(
-                                        icon: Icon(Icons.favorite, color: favourites[index].favourite == "true" ? Colors.red : Colors.white), 
+                                        icon: Icon(Icons.favorite, color: Colors.red), 
                                         onPressed: () {
-                                          _checkStatus(favourites[index].id);
+                                          setState(() {
+                                            _checkStatus(favourites[index].id);
+                                          });
                                         },
                                       ),
                                       IconButton(

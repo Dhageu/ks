@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pr3/pages/authpage.dart';
+import 'package:pr3/pages/orders.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Profile extends StatefulWidget {
@@ -39,7 +40,6 @@ class _ProfileState extends State<Profile> {
     }
     final user = Supabase.instance.client.auth.currentUser;
     email = user?.email;
-    //email = email.toString().replaceAll('T', ' ');
     createdAt = user?.createdAt.toString().replaceAll('T', ' ').split('.').first;
     setState(() {
       
@@ -50,8 +50,6 @@ class _ProfileState extends State<Profile> {
   void initState() {
     super.initState();
     fetchData();
-    //username = user?.userMetadata?['name'];
-    //createdAt = user?.userMetadata?['createdAt'];
   }
 
   @override
@@ -72,7 +70,6 @@ class _ProfileState extends State<Profile> {
               const SizedBox(height: 20,),
               DecoratedBox(
                 decoration: const BoxDecoration(
-                  //border: Border(bottom: BorderSide()),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(0.0),
@@ -82,7 +79,6 @@ class _ProfileState extends State<Profile> {
               const SizedBox(height: 20,),
               DecoratedBox(
                 decoration: const BoxDecoration(
-                  //border: Border(bottom: BorderSide()),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(0.0),
@@ -92,7 +88,6 @@ class _ProfileState extends State<Profile> {
               const SizedBox(height: 20,),
               DecoratedBox(
                 decoration: const BoxDecoration(
-                  //border: Border(bottom: BorderSide()),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(0.0),
@@ -101,6 +96,15 @@ class _ProfileState extends State<Profile> {
               ),
               const SizedBox(height: 50,),
               ElevatedButton(onPressed: () {signOut();}, child: Text('Выход')),
+              const SizedBox(height: 20,),
+              ElevatedButton(
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Orders(),),
+                  );
+                }, 
+                child: Text('Мои заказы'))
             ],
           ),
         ),

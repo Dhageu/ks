@@ -21,17 +21,19 @@ class Homepage extends StatefulWidget {
 }
 
 class HomepageState extends State<Homepage> {
-  final user = Supabase.instance.client.auth.currentUser;
+  final user = Supabase.instance.client.auth.currentUser!;
   late Future<List<Group>> groups;
   final TextEditingController _searchController = TextEditingController();
   List<Group> allGroups = [];
   List<Group> filteredGroups = [];
+  List<Group> favourites = [];
   dynamic last_id = 0;
   List notes = []; 
   int _selectedIndex = 0;
   Color iconColor = Colors.white;
   int sort = 0;
   String query = '';
+  String status = '';
 
   static const List<Widget> _widgetOptions = <Widget>[
     Homepage(),
@@ -45,24 +47,18 @@ class HomepageState extends State<Homepage> {
   }
 
   //Функция добавления в корзину
-  void _addCart(int index) async {
-    final item = await ApiService().getGroupByID(index);
-    Map<String, dynamic> updatedCart = {};
-    if (item.quantity == 0) {
-      updatedCart = {
-        "Title": item.title,
-        "Description": item.description,
-        "Favourite": item.favourite,
-        "ImageURL": item.image_url,
-        "Price": item.price,
-        "Quantity": 1,
-      };
-      await ApiService().updateGroup(index, updatedCart);
+  void _addCart(Group group) async {
+    List<Group> cart = await ApiService().getCartItems(user.id.toString());
+    Set<int> cartIds = cart.map((item) => item.id).toSet();
+    bool isCart = cartIds.contains(group.id);
+    if (!isCart) {
+      await ApiService().addCart(group.id, user.id.toString());
+      debugPrint('Добавлен в корзину');
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: item.quantity == 0 ? Text(item.title+" добавлен в корзину")
-        : Text(item.title+" уже в корзине")
+        content: !isCart ? Text(group.title+" добавлен в корзину")
+        : Text(group.title+" уже в корзине")
       ),
     );
     setState(() {
@@ -99,8 +95,8 @@ class HomepageState extends State<Homepage> {
   }
 
   //Функция изменения статуса избранного
-  void _checkStatus(int index) async {
-    final group = await ApiService().getGroupByID(index);
+  /*void _checkStatus(int index) async {
+    final group = await ApiService().getGroupByID(index, user.id.toString());
     String status = "";
     if (group.favourite == "false") {
       status = "true";
@@ -119,15 +115,89 @@ class HomepageState extends State<Homepage> {
     setState(() {
       readJson();
     });
+  }*/
+
+  void _checkStatus(Group group) async {
+    if (favourites.isNotEmpty && favourites.map((favourite) => favourite.id).toSet().contains(group.id)) {
+      await ApiService().deleteFavByID(group.id, user.id.toString());
+      setState(() {
+        readJson();
+      });
+    } else {
+      await ApiService().addFav(group.id, user.id.toString());
+      setState(() {
+        readJson();
+      });
+    }
   }
+
+  Future<List<Group>> readFromSB() async {
+
+    final user = Supabase.instance.client.auth.currentUser!;
+    try {
+      final response = await Supabase.instance.client.from('favourites').select('items').eq('user_id', user.id.toString());
+      if (response.toString() != '[]') {
+        List<dynamic> data = response[0]['items'];
+        List<Group> favourites = data.map((json) => Group.fromJson(json)).toList();
+        return favourites;
+      }
+      return [];
+    } catch (e) {
+      debugPrint(e.toString());
+      return [];
+    }
+    
+  }
+
+  /*void _checkStatus(Group g) async {
+    final user = Supabase.instance.client.auth.currentUser!;
+    List<dynamic> newFav = [{
+      "ID": g.id,
+      "Title": g.title,
+      "Description": g.description,
+      "Favourite": "true",
+      "ImageURL": g.image_url,
+      "Price": g.price,
+      "Quantity": g.quantity,
+    }];
+    try {
+      final getResponse = await Supabase.instance.client.from('favourites').select('items').eq('user_id', user.id.toString());
+      if (getResponse.toString() != '[]') {
+        final group = getResponse[0]['items'] as List;
+          if (group != [] && group.any((items) => items['ID'] == g.id)) {
+            final deleteResponse = await Supabase.instance.client.rpc('fav_remove', params: {'u_id': user.id.toString(), 'fav_id': g.id});
+            final getResponse = await Supabase.instance.client.from('favourites').select('items').eq('user_id', user.id.toString());
+            if (getResponse[0]['items'].toString() == '[]') {
+              final deleteUserData = await Supabase.instance.client.from('favourites').delete().eq('items', '[]');
+              debugPrint('Очищено');
+            }
+            debugPrint('Любимое убралось');
+            readJson();
+          } else {
+            final postResponse = await Supabase.instance.client.rpc('fav_add', params: {'u_id': user.id.toString(), 'new_fav': newFav});
+            debugPrint('Любимое добавилось');
+            readJson();
+          }
+      } else {
+        final postResponse = await Supabase.instance.client.from('favourites').insert({'user_id': user.id.toString(), 'items': newFav});
+        debugPrint('Любимое добавилось');
+        readJson();
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }*/
 
   //Функция чтения данных
   void readJson() async {
     groups = ApiService().getGroups();
+    List<Group> f = await ApiService().getFavourites(user.id.toString());
     List<Group> g = await groups;
+    //List<Group> fav = await readFromSB();
     setState(() {
       allGroups = g;
       filteredGroups = g;
+      favourites = f;
     });
   }
 
@@ -266,11 +336,12 @@ class HomepageState extends State<Homepage> {
                       return group.title.toLowerCase().startsWith(_searchController.text.toLowerCase());
                     }).toList();
                     sortGroups(groups);
-                    // groups.sort((a, b) => b.title.compareTo(a.title));
+                    Set<int> favIds = favourites.map((favourite) => favourite.id).toSet();
                     return ListView.builder(
                       key: const PageStorageKey<String>('groupList'),
                       itemCount: groups.length,
                       itemBuilder: (context, index) {
+                        bool isFav = favIds.contains(groups[index].id);
                         return Padding(
                           padding: const EdgeInsets.all(20.0),
                           child: ListTile(
@@ -294,14 +365,16 @@ class HomepageState extends State<Homepage> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       IconButton(
-                                        icon: Icon(Icons.favorite, color: groups[index].favourite == "true" ? Colors.red : Colors.white), 
+                                        icon: Icon(Icons.favorite, color: isFav == true ? Colors.red : Colors.white), 
                                         onPressed: () {
-                                          _checkStatus(groups[index].id);
+                                          setState(() {
+                                            _checkStatus(groups[index]);
+                                          });
                                         },
                                       ),
                                       IconButton(
                                         onPressed: () {
-                                          _addCart(groups[index].id);
+                                          _addCart(groups[index]);
                                         }, 
                                         icon: const Icon(Icons.add_shopping_cart, color: Colors.white)
                                       ),
