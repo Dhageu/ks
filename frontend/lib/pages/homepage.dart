@@ -1,12 +1,8 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pr3/pages/add_group.dart';
 import 'package:pr3/pages/cart.dart';
 import 'package:pr3/pages/description.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pr3/models/group_model.dart';
 import 'package:pr3/models/api_service.dart';
 import 'package:pr3/pages/favourite.dart';
@@ -35,10 +31,10 @@ class HomepageState extends State<Homepage> {
   String query = '';
   String status = '';
 
-  static const List<Widget> _widgetOptions = <Widget>[
+  /*static const List<Widget> _widgetOptions = <Widget>[
     Homepage(),
     Profile(),
-  ];
+  ];*/
 
   void _onItemTapped(int index) {
     setState(() {
@@ -94,29 +90,6 @@ class HomepageState extends State<Homepage> {
     });
   }
 
-  //Функция изменения статуса избранного
-  /*void _checkStatus(int index) async {
-    final group = await ApiService().getGroupByID(index, user.id.toString());
-    String status = "";
-    if (group.favourite == "false") {
-      status = "true";
-    } else {
-      status = "false";
-    }
-    Map<String, dynamic> updatedStatus = {
-      "Title": group.title,
-      "Description": group.description,
-      "Favourite": status,
-      "ImageURL": group.image_url,
-      "Price": group.price,
-      "Quantity": group.quantity,
-    };
-    await ApiService().updateGroup(index, updatedStatus);
-    setState(() {
-      readJson();
-    });
-  }*/
-
   void _checkStatus(Group group) async {
     if (favourites.isNotEmpty && favourites.map((favourite) => favourite.id).toSet().contains(group.id)) {
       await ApiService().deleteFavByID(group.id, user.id.toString());
@@ -148,45 +121,6 @@ class HomepageState extends State<Homepage> {
     }
     
   }
-
-  /*void _checkStatus(Group g) async {
-    final user = Supabase.instance.client.auth.currentUser!;
-    List<dynamic> newFav = [{
-      "ID": g.id,
-      "Title": g.title,
-      "Description": g.description,
-      "Favourite": "true",
-      "ImageURL": g.image_url,
-      "Price": g.price,
-      "Quantity": g.quantity,
-    }];
-    try {
-      final getResponse = await Supabase.instance.client.from('favourites').select('items').eq('user_id', user.id.toString());
-      if (getResponse.toString() != '[]') {
-        final group = getResponse[0]['items'] as List;
-          if (group != [] && group.any((items) => items['ID'] == g.id)) {
-            final deleteResponse = await Supabase.instance.client.rpc('fav_remove', params: {'u_id': user.id.toString(), 'fav_id': g.id});
-            final getResponse = await Supabase.instance.client.from('favourites').select('items').eq('user_id', user.id.toString());
-            if (getResponse[0]['items'].toString() == '[]') {
-              final deleteUserData = await Supabase.instance.client.from('favourites').delete().eq('items', '[]');
-              debugPrint('Очищено');
-            }
-            debugPrint('Любимое убралось');
-            readJson();
-          } else {
-            final postResponse = await Supabase.instance.client.rpc('fav_add', params: {'u_id': user.id.toString(), 'new_fav': newFav});
-            debugPrint('Любимое добавилось');
-            readJson();
-          }
-      } else {
-        final postResponse = await Supabase.instance.client.from('favourites').insert({'user_id': user.id.toString(), 'items': newFav});
-        debugPrint('Любимое добавилось');
-        readJson();
-      }
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-  }*/
 
   //Функция чтения данных
   void readJson() async {

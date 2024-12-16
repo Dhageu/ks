@@ -1,12 +1,8 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:pr3/models/api_service.dart';
 import 'package:pr3/models/group_model.dart';
 import 'package:pr3/pages/cart.dart';
 import 'package:pr3/pages/description.dart';
-import 'package:pr3/pages/homepage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Favourite extends StatefulWidget {
@@ -72,29 +68,6 @@ class _FavouriteState extends State<Favourite> {
       });
     }
   }
-
-  /*void _checkStatus(int index) async {
-    final group = await ApiService().getGroupByID(index);
-    String status = "";
-    if (group.favourite == "false") {
-      status = "true";
-    } else {
-      status = "false";
-    }
-    Map<String, dynamic> updatedStatus = {
-      "Title": group.title,
-      "Description": group.description,
-      "Favourite": status,
-      "ImageURL": group.image_url,
-      "Price": group.price,
-      "Quantity": group.quantity,
-    };
-    await ApiService().updateGroup(index, updatedStatus);
-    setState(() {
-      readJson();
-      readJsonH();
-    });
-  }*/
 
   @override
   void initState () {

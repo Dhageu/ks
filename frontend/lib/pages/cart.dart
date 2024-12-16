@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:pr3/models/api_service.dart';
@@ -21,6 +18,7 @@ class _CartState extends State<Cart> {
   late Future<List<Group>> cartItems;
   final VoidCallback readJsonH;
   _CartState({required this.readJsonH});
+
   //Функция чтения json файла
   void readJson() async {
     cartItems = ApiService().getCartItems(user.id.toString());
@@ -61,7 +59,7 @@ class _CartState extends State<Cart> {
     debugPrint(user.id);
     List<Map<String, dynamic>> g_json = g.map((group) => group.toJson()).toList();
     try {
-      final response = await Supabase.instance.client.rpc('add_to_jsonb_array', params: {'u_id': user.id.toString(), 'new_element': g_json});
+      await Supabase.instance.client.rpc('add_to_jsonb_array', params: {'u_id': user.id.toString(), 'new_element': g_json});
       debugPrint('Успешно отправилось в Supabase');
       for (var item in g) {
         updatedCart = {

@@ -1,8 +1,4 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:pr3/pages/homepage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -40,7 +36,7 @@ class _AuthpageState extends State<Authpage> {
               title: const Text('Введите имя пользователя'),
               content: TextField(
                 controller: _usernameController,
-                decoration: InputDecoration(labelText: 'Имя пользователя'),
+                decoration: const InputDecoration(labelText: 'Имя пользователя'),
               ),
               actions: [
                 Row(
@@ -59,7 +55,7 @@ class _AuthpageState extends State<Authpage> {
                           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Homepage()));
                         }
                       },
-                      child: Text('Закончить регистрацию')),
+                      child: const Text('Закончить регистрацию')),
                     ElevatedButton( 
                       onPressed: () async {
                         try {
@@ -76,7 +72,7 @@ class _AuthpageState extends State<Authpage> {
                           Navigator.pop(context);
                         }
                       },
-                      child: Text('Отмена')),
+                      child: const Text('Отмена')),
                   ],
                 ),
               ],
@@ -85,7 +81,7 @@ class _AuthpageState extends State<Authpage> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('id не найдено')),
+          const SnackBar(content: Text('id не найдено')),
         );
       }
     } on AuthException catch (e) {
@@ -124,10 +120,10 @@ class _AuthpageState extends State<Authpage> {
         throw const AuthException('Invalid mail address');
       }
       await Supabase.instance.client.auth.signInWithPassword(
-      email: email,
-      password: password,
+        email: email,
+        password: password,
       );
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Homepage()));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Homepage()));
     } on AuthException catch (e) {
       dynamic error;
       switch (e.message) {
@@ -147,7 +143,6 @@ class _AuthpageState extends State<Authpage> {
           error = e;
           break;
       }
-      debugPrint(e.toString());
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Ошибка входа: $error')),
       );
@@ -174,28 +169,28 @@ class _AuthpageState extends State<Authpage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Авторизация')),
+      appBar: AppBar(title: const Text('Авторизация')),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: const InputDecoration(labelText: 'Email'),
             ),
             TextField(
               controller: _passwordController,
               obscureText: true,
-              decoration: InputDecoration(labelText: 'Пароль'),
+              decoration: const InputDecoration(labelText: 'Пароль'),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
                 final email = _emailController.text;
                 final password = _passwordController.text;
                 await signIn(email, password); // Вход в систему
               },
-              child: Text('Войти'),
+              child: const Text('Войти'),
             ),
             const SizedBox(height: 20,),
             ElevatedButton(
@@ -204,7 +199,7 @@ class _AuthpageState extends State<Authpage> {
                 final password = _passwordController.text;
                 await signUp(email, password, context); // Регистрация
               },
-              child: Text('Зарегистрироваться'),
+              child: const Text('Зарегистрироваться'),
             ),
           ],
         ),

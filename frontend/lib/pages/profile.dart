@@ -1,10 +1,7 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:pr3/pages/authpage.dart';
 import 'package:pr3/pages/orders.dart';
+import 'package:pr3/pages/pick_receiver.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Profile extends StatefulWidget {
@@ -15,6 +12,7 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
+  final user = Supabase.instance.client.auth.currentUser!;
   String username = '';
   dynamic email = '';
   dynamic createdAt = '';
@@ -31,16 +29,15 @@ class _ProfileState extends State<Profile> {
   }
 
   Future<void> fetchData() async {
-    final response = await Supabase.instance.client.from('users').select();
+    final response = await Supabase.instance.client.from('users').select().eq('user_id', user.id.toString());
     if (response.isNotEmpty) {
       final List<dynamic> data = response;
       for (var r in data) {
         username = r['name'];
       }
     }
-    final user = Supabase.instance.client.auth.currentUser;
-    email = user?.email;
-    createdAt = user?.createdAt.toString().replaceAll('T', ' ').split('.').first;
+    email = user.email;
+    createdAt = user.createdAt.toString().replaceAll('T', ' ').split('.').first;
     setState(() {
       
     });
@@ -95,16 +92,28 @@ class _ProfileState extends State<Profile> {
                 )
               ),
               const SizedBox(height: 50,),
-              ElevatedButton(onPressed: () {signOut();}, child: Text('Выход')),
-              const SizedBox(height: 20,),
+              ElevatedButton(onPressed: () {signOut();}, child: const Text('Выход', style: TextStyle(color: Colors.black),)),
+              const SizedBox(height: 10,),
               ElevatedButton(
                 onPressed: () async {
-                  final result = await Navigator.push(
+                  await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => Orders(),),
+                    MaterialPageRoute(builder: (context) => const Orders(),),
                   );
                 }, 
-                child: Text('Мои заказы'))
+                child: const Text('Мои заказы', style: TextStyle(color: Colors.black),)
+              ),
+              const SizedBox(height: 10,),
+              ElevatedButton(
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const PickReceiver(),),
+                  );
+                }, 
+                child: const Text('Чат', style: TextStyle(color: Colors.black),)
+              ),
+              const SizedBox(height: 20,)
             ],
           ),
         ),

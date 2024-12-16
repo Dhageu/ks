@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:pr3/pages/authpage.dart';
 import 'package:pr3/pages/homepage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:convert';
-import 'dart:io';
 
 void main() async {
   await Supabase.initialize(
@@ -30,7 +28,7 @@ class MainAppState extends State<MainApp> {
       if (user == null) {
         throw AuthException('Пользователь не найден');
       } else{
-        final response = await admin.auth.admin.getUserById(user!.id);
+        await admin.auth.admin.getUserById(user!.id);
       }
     } on AuthException catch (e) {
       debugPrint(e.statusCode);

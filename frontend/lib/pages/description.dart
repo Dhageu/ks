@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pr3/models/api_service.dart';
-import 'dart:developer' as developer;
 
 import 'package:pr3/models/group_model.dart';
 import 'package:pr3/pages/edit.dart';
