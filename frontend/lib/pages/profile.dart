@@ -14,6 +14,7 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
+  final user = Supabase.instance.client.auth.currentUser!;
   String username = '';
   dynamic email = '';
   dynamic createdAt = '';
@@ -31,16 +32,11 @@ class _ProfileState extends State<Profile> {
 
   Future<void> fetchData() async {
     final response = await Supabase.instance.client.from('users').select();
-    if (response.isNotEmpty) {
-      final List<dynamic> data = response;
-      for (var r in data) {
-        username = r['name'];
-      }
-    }
-    final user = Supabase.instance.client.auth.currentUser;
-    email = user?.email;
+    final resp = await Supabase.instance.client.from('users').select().eq('user_id', user.id.toString());
+    username = resp[0]['name'].toString();
+    email = user.email;
     //email = email.toString().replaceAll('T', ' ');
-    createdAt = user?.createdAt.toString().replaceAll('T', ' ').split('.').first;
+    createdAt = user.createdAt.toString().replaceAll('T', ' ').split('.').first;
     setState(() {
       
     });

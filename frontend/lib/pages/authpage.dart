@@ -44,7 +44,7 @@ class _AuthpageState extends State<Authpage> {
                     ElevatedButton( 
                       onPressed: () async {
                         try {
-                          await Supabase.instance.client.from('users').insert({'name': _usernameController.text});
+                          await Supabase.instance.client.from('users').insert({'name': _usernameController.text, 'user_id': user_id.toString()});
                         } catch (e) {
                           debugPrint('Ошибка в установке имени $e');
                           ScaffoldMessenger.of(context).showSnackBar(
